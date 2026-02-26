@@ -142,8 +142,22 @@ install_sdkman() {
 
 load_sdkman_now() {
   # shellcheck disable=SC1090
-  [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+  if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+    # sdkman-init.sh can reference optional env vars directly; relax nounset while sourcing.
+    set +u
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
+    set -u
+  fi
   require_cmd sdk
+}
+
+run_sdk() {
+  # SDKMAN scripts are not fully nounset-safe; execute sdk with nounset temporarily disabled.
+  set +u
+  sdk "$@"
+  local rc=$?
+  set -u
+  return "$rc"
 }
 
 pick_java_identifier() {
@@ -152,7 +166,7 @@ pick_java_identifier() {
   local vendor_regex="$2"
 
   # sdk list java output includes ANSI; strip it and extract identifiers like 25.0.2-tem
-  sdk list java \
+  run_sdk list java \
     | strip_ansi \
     | grep -Eo "${major}\.[0-9]+\.[0-9]+-${vendor_regex}" \
     | head -n1 \
@@ -177,25 +191,25 @@ install_java_gradle() {
 
   if [[ -z "$java_id" ]]; then
     warn "Could not auto-pick Temurin Java. Installing SDKMAN default latest java instead..."
-    sdk install java
+    run_sdk install java
   else
     log "Installing Java: $java_id"
-    sdk install java "$java_id"
-    sdk default java "$java_id"
+    run_sdk install java "$java_id"
+    run_sdk default java "$java_id"
   fi
 
   log "Installing Gradle..."
   if ask_yn "Install Gradle $GRADLE_VERSION specifically (recommended for reproducibility)?" "Y"; then
-    if ! sdk install gradle "$GRADLE_VERSION"; then
+    if ! run_sdk install gradle "$GRADLE_VERSION"; then
       warn "Gradle $GRADLE_VERSION not found in SDKMAN. Installing latest Gradle instead..."
-      sdk install gradle
+      run_sdk install gradle
     fi
   else
-    sdk install gradle
+    run_sdk install gradle
   fi
 
   if ask_yn "Also install Maven (common for Java projects)?" "Y"; then
-    sdk install maven
+    run_sdk install maven
   fi
 
   log "Java:   $(java -version 2>&1 | head -n1 || true)"
@@ -228,9 +242,9 @@ install_nvm_node() {
     return 0
   fi
 
-  log "Installing Node LTS (major $NODE_LTS_MAJOR)..."
-  nvm install "$NODE_LTS_MAJOR"
-  nvm alias default "$NODE_LTS_MAJOR"
+  log "Installing Node LTS ($NODE_LTS_ALIAS)..."
+  nvm install "$NODE_LTS_ALIAS"
+  nvm alias default "$NODE_LTS_ALIAS"
   node -v
   npm -v
 }
