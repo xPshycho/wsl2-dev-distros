@@ -1,0 +1,45 @@
+# core
+ca-certificates
+curl
+wget
+git
+gnupg
+dirmngr
+lsb-release
+software-properties-common
+
+# build tooling
+build-essential
+make
+pkg-config
+cmake
+ninja-build
+
+# python build deps (pyenv / python-build)
+libssl-dev
+zlib1g-dev
+libbz2-dev
+libreadline-dev
+libsqlite3-dev
+libncursesw5-dev
+xz-utils
+tk-dev
+libffi-dev
+liblzma-dev
+uuid-dev
+
+# useful cli
+unzip
+zip
+tar
+xz-utils
+jq
+htop
+net-tools
+bc
+
+# base python (system) for tooling
+python3
+python3-pip
+python3-venv
+pipx
