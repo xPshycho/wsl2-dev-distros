@@ -6,7 +6,6 @@ git
 gnupg
 dirmngr
 lsb-release
-software-properties-common
 
 # build tooling
 build-essential
